@@ -6,9 +6,13 @@ WORKDIR /usr/app
 
 COPY package*.json .
 
-RUN mkdir /usr/app/build
+RUN npm install
 
-COPY ./build ./build
+COPY . .
+
+RUN npm run build
+
+RUN rm -r src
 
 ENV PORT=80
 
