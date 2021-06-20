@@ -1,0 +1,171 @@
+import { Request } from "express";
+import { GraphQLError, GraphQLFormattedError } from "graphql";
+import { nanoid } from "nanoid";
+import { IProject, IWebTracker } from "../core";
+
+export async function singleProjectResolver(args: any, req: Request) {
+    let id = args.id
+    let db = req.db;
+    let profile = req.authedProfile
+
+    if (profile) {
+        return (await db.partitionedFind("project", {
+            selector: {
+                _id: id,
+                user: profile._id
+            }
+        })).docs[0]
+    }
+
+    let errors: GraphQLFormattedError = {
+        message: "Erreur d'authentification",
+    }
+    throw errors;
+}
+
+export async function createProject(args: any, req: Request) {
+    let project = args.project as any;
+    let tracker = args.firstTracker as any;
+
+    let db = req.db;
+    let profile = req.authedProfile
+
+    if (profile) {
+        let errs: any = {};
+
+        let constructed: IProject = {
+            _id: "project:" + nanoid(),
+            title: (project.title as string).toUpperCase(),
+            comment: project.comment,
+            user: profile._id,
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+        }
+
+        if (!constructed.title) {
+            errs.title = "Indiquez le titre du projet";
+        }
+        else {
+            let existent = (await db.partitionedFind("project", {
+                selector: {
+                    title: constructed.title,
+                    user: constructed.user
+                }
+            })).docs;
+
+            if (existent.length > 0) {
+                errs.title = "Un projet de ce nom existe déjà";
+            }
+        }
+
+        if (tracker) {
+            if (!tracker.title) {
+                errs.trackerTitle = "Indiquez un titre au traqueur";
+            }
+            if (!tracker.url) {
+                errs.trackerUrl = "Indiquez l'adresse internet du site à surveiller."
+            }
+
+            let url = tracker.url as string;
+            if (url && !url.match(/^https:\/\/(.*)\.([a-z]{0,4})/)) {
+                errs.trackerUrl = "Adresse internet invalide";
+            }
+        }
+
+        if (Object.keys(errs).length > 0) {
+            throw new GraphQLError("Corrigez les propriétés incorrectes.", undefined, undefined, undefined, undefined, undefined, errs);
+        }
+
+        let projectId = (await db.insert(constructed)).id;
+        if (projectId) {
+            let trackerDoc: IWebTracker = {
+                _id: "tracker:" + nanoid(),
+                type: "web",
+                project: projectId,
+                title: tracker.title,
+                url: tracker.url,
+                tag: nanoid(),
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+            }
+
+            await db.insert(trackerDoc);
+            return { id: projectId };
+        }
+    }
+
+    let errors: GraphQLFormattedError = {
+        message: "Erreur d'authentification",
+    }
+    throw errors;
+}
+
+export async function allProjectsResolver(args: any, req: Request) {
+    let id = args.id
+    let db = req.db;
+    let profile = req.authedProfile;
+
+    if (profile) {
+        return (await db.partitionedFind("project", {
+            selector: {
+                user: profile._id
+            }
+        })).docs
+    }
+
+    throw new GraphQLError("Utilisateur inconnu")
+}
+
+export async function singleTrackerResolver(args: any, req: Request) {
+    let id = args.id
+    let db = req.db;
+    let profile = req.authedProfile;
+
+    if (profile) {
+        let tracker = (await db.partitionedFind("tracker", {
+            selector: {
+                _id: id
+            }
+        })).docs[0] as unknown as IWebTracker;
+
+        if (tracker) {
+            let project = (await db.partitionedFind("project", {
+                selector: {
+                    _id: tracker.project,
+                    user: profile._id
+                }
+            })).docs[0] as unknown as IProject;
+
+            if (project) {
+                return tracker;
+            }
+        }
+    }
+
+    throw new GraphQLError("Accès non autorisé")
+}
+
+export async function allTrackerResolver(args: any, req: Request) {
+    let id = args.id
+    let db = req.db;
+    let profile = req.authedProfile;
+
+    if (profile) {
+        let projects = (await db.partitionedFind("project", {
+            selector: {
+                user: profile._id
+            }
+        })).docs as unknown as IProject[];
+
+        let trackers = (await db.partitionedFind("tracker", {
+            selector: {
+                project: {
+                    "$in": projects.map((p) => p._id)
+                }
+            }
+        })).docs as unknown as IWebTracker[];
+        return trackers;
+    }
+
+    throw new GraphQLError("Accès non autorisé")
+}
