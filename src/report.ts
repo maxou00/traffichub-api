@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import axios from "axios";
-import { Request, Response, Router } from "express";
+import { json, Request, Response, Router } from "express";
 import { IWebReport, IWebTracker } from "./core";
 import { buildReportingScript } from "./core/report-utils";
 import { isDev } from "./core/utils";
@@ -17,6 +17,8 @@ router.get("/:tag", async (req: Request, res: Response) => {
 
     res.status(200).header("Content-Type", "text/javascript").send(script);
 });
+
+router.use(json());
 
 router.post("/:tag", async (req: Request, res: Response) => {
     let tag = req.params.tag;
@@ -56,7 +58,6 @@ router.post("/:tag", async (req: Request, res: Response) => {
             }
         }
     }
-    return res.status(200).json("success");
 });
 
 export default router;

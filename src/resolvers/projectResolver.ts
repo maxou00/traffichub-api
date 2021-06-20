@@ -62,12 +62,13 @@ export async function createProject(args: any, req: Request) {
             if (!tracker.title) {
                 errs.trackerTitle = "Indiquez un titre au traqueur";
             }
+            
             if (!tracker.url) {
                 errs.trackerUrl = "Indiquez l'adresse internet du site à surveiller."
             }
 
             let url = tracker.url as string;
-            if (url && !url.match(/^https:\/\/(.*)\.([a-z]{0,4})/)) {
+            if (url && !url.match(/^(http[s]?):\/\/(.*)?/)) {
                 errs.trackerUrl = "Adresse internet invalide";
             }
         }
