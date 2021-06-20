@@ -8,11 +8,9 @@ COPY package*.json .
 
 RUN npm install
 
-COPY . .
+RUN mkdir /usr/app/build
 
-RUN npm run build
-
-RUN rm -r src
+COPY build  build
 
 ENV PORT=80
 
