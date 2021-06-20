@@ -5,7 +5,8 @@
   "main": "build/app.js",
   "scripts": {
     "build": "tsc .",
-    "watch": "concurrently \"tsc -w\" \"nodemon .\""
+    "watch": "concurrently \"tsc -w\" \"nodemon .\"",
+    "start": "node ."
   },
   "keywords": [],
   "author": "",

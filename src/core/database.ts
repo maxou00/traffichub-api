@@ -11,6 +11,6 @@ export async function database() {
     }
     let connection = nano(process.env.COUCHDB_URL || "");
     await connection.auth(process.env.COUCHDB_USER || "", process.env.COUCHDB_PASS || "")
-    client = connection.use(DATABASE);
+    client = connection.use(process.env.COUCHDB_DB || DATABASE);
     return client;
 }

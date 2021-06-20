@@ -10,7 +10,7 @@ export function isStaging() {
     return process.env.NODE_ENV === "production" && process.env.APP_ENV === "staging";
 }
 
-export const DATABASE = "traffikhunt";
+export const DATABASE = "traffichub";
 
 export function generateObfuscatedReporter(reporter: string) {
     return `
