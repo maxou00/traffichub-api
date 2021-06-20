@@ -41,7 +41,7 @@ app.use((req, res, next) => cors({
 })(req, res, next)
 );
 
-app.post("/reporter", reporter);
+app.use("/report", reporter);
 
 app.use(authMiddleware)
 
@@ -56,4 +56,4 @@ app.use("/", graphqlHTTP({
 }));
 
 
-app.listen(parseInt(process.env.PORT || "") || 4000);
+app.listen(parseInt(process.env.PORT || "4000"));
