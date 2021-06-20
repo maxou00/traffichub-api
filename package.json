@@ -4,7 +4,7 @@
   "description": "",
   "main": "build/app.js",
   "scripts": {
-    "build": "tsc .",
+    "build": "tsc",
     "watch": "concurrently \"tsc -w\" \"nodemon .\"",
     "start": "node ."
   },
