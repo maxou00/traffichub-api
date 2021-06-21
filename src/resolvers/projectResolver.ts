@@ -1,7 +1,9 @@
 import { Request } from "express";
 import { GraphQLError, GraphQLFormattedError } from "graphql";
 import { nanoid } from "nanoid";
-import { IProject, IWebTracker } from "../core";
+import { IProject, IWebReport, IWebTracker } from "../core";
+import { ReportTimeClassifier } from "../visualization/classifiers";
+import { ProjectAugment, ReportAugment, TrackerAugment } from "./utils";
 
 export async function singleProjectResolver(args: any, req: Request) {
     let id = args.id
@@ -9,12 +11,12 @@ export async function singleProjectResolver(args: any, req: Request) {
     let profile = req.authedProfile
 
     if (profile) {
-        return (await db.partitionedFind("project", {
+        return ProjectAugment( (await db.partitionedFind("project", {
             selector: {
                 _id: id,
                 user: profile._id
             }
-        })).docs[0]
+        })).docs[0] )
     }
 
     let errors: GraphQLFormattedError = {
@@ -62,7 +64,7 @@ export async function createProject(args: any, req: Request) {
             if (!tracker.title) {
                 errs.trackerTitle = "Indiquez un titre au traqueur";
             }
-            
+
             if (!tracker.url) {
                 errs.trackerUrl = "Indiquez l'adresse internet du site à surveiller."
             }
@@ -111,7 +113,7 @@ export async function allProjectsResolver(args: any, req: Request) {
             selector: {
                 user: profile._id
             }
-        })).docs
+        })).docs.map(ProjectAugment)
     }
 
     throw new GraphQLError("Utilisateur inconnu")
@@ -138,7 +140,7 @@ export async function singleTrackerResolver(args: any, req: Request) {
             })).docs[0] as unknown as IProject;
 
             if (project) {
-                return tracker;
+                return TrackerAugment(tracker);
             }
         }
     }
@@ -165,8 +167,59 @@ export async function allTrackerResolver(args: any, req: Request) {
                 }
             }
         })).docs as unknown as IWebTracker[];
-        return trackers;
+        return trackers.map(TrackerAugment);
     }
 
     throw new GraphQLError("Accès non autorisé")
+}
+
+export async function oneTrackerVisitorsInFrame(args: any, req: Request) {
+    let tag = args.tag as string;
+    let db = req.db;
+    let profile = req.authedProfile;
+
+    if (true || profile) {
+        let tracker = (await db.partitionedFind("tracker", {
+            selector: {
+                tag
+            },
+        })).docs[0] as unknown as IWebTracker;
+
+        if (tracker) {
+            let from = args.from ? Date.parse(args.from) : tracker.createdAt;
+            let to = args.to ? Date.parse(args.to) : Date.now();
+            let period = args.timeframe as number;
+
+            let reports = (await db.partitionedFind("report", {
+                selector: {
+                    trackingTag: tracker.tag,
+                    "$and": [
+                        {
+                            createdAt: {
+                                "$gte": from
+                            }
+                        },
+                        {
+                            createdAt: {
+                                "$lte": to
+                            }
+                        }
+                    ]
+                }
+            })).docs as unknown[] as IWebReport[];
+
+            if (reports) {
+                let map = reports.map(ReportAugment);
+                console.log(tag, " Found ",map.length);
+                let classifier = new ReportTimeClassifier(map, {
+                    from: from,
+                    to: to
+                }, period);
+
+                return { total: map.length, reports: map, groups: classifier.groups };
+            }
+        }
+    }
+
+    return { total: 0, reports: [], groups: []};
 }

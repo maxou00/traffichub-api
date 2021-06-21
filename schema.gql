@@ -1,0 +1,139 @@
+type User {
+    firstName: String!
+    lastName: String!
+    fullName: String!
+    email: String!
+    projects: [Project]!
+    id: String!
+    createdAt: String!
+    updatedAt: String!
+}
+
+type Project  {
+    title: String!
+    comment: String
+    owner: User!
+    trackers: [Tracker]!
+    id: String!
+    createdAt: String!
+    updatedAt: String!
+}
+
+type Tracker {
+    project: Project
+    title: String
+    type: TrackerType
+    url: String
+    tag: String
+    reports: [WebReport!]!
+    visitors(from: String, to: String, timeframe: Int): GroupedSiteVisitor
+    id: String!
+    createdAt: String!
+    updatedAt: String!
+}
+
+enum TrackerType {
+    web
+}
+
+type GroupedSiteVisitor {
+    total: Int
+    reports: [WebReport!]!
+    groups: [ReportTimeGroup!]!
+}
+
+type ReportTimeGroup {
+    from: Float
+    to: Float
+    data: [WebReport!]!
+}
+
+type IpInfo {
+    ip: String
+    hostname: String
+    country: String
+    loc: String
+    postal: String
+    timezone: String
+}
+
+type WebReportLocation {
+    href: String
+    origin: String
+    host: String
+    pathname: String
+    port: String
+    protocol: String
+}
+
+type WebReportScreen {
+    availWidth: Float
+    availHeight: Float
+    width: Float
+    height: Float
+    colorDepth: Float
+    pixelDepth: Float
+}
+
+type WebReportNavigatorExtras {
+    effectiveType: String
+    type: String
+}
+
+type WebReportNavigator {
+    version: String
+    vendor: String
+    language: String
+    webdriver: Boolean
+    maxTouchPoints: Int
+    concurrency: Int
+    extas: WebReportNavigatorExtras
+}
+
+type WebReport  {
+    tracker: Tracker
+    pageTitle: String
+    location: WebReportLocation
+    screen: WebReportScreen
+    navigator: WebReportNavigator
+    reporterAddress: String
+    ipInfo: IpInfo
+    id: String!
+    createdAt: String!
+    updatedAt: String!
+}
+
+type SigninResponse {
+    profile: User
+    token: String
+}
+
+input ProjectInput {
+    title: String!
+    comment: String
+}
+
+input TrackerInput {
+    title: String!
+    url: String!
+}
+
+type ProjectInputResponse {
+    id: String
+}
+
+type Query {
+    me: User
+    profile(id: String): User
+    profiles: [User]!
+    project(id: String): Project
+    projects: [Project]!
+    trackers: [Tracker]!
+    reports: [WebReport]!
+}
+
+type Mutation {
+    signin(email: String, password: String): SigninResponse
+    signup(firstName: String, lastName: String, email: String, password: String, confirmPassword: String): SigninResponse
+    createProject(project: ProjectInput, firstTracker: TrackerInput): ProjectInputResponse
+}

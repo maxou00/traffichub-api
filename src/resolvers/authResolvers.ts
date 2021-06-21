@@ -5,6 +5,7 @@ import { GraphQLError, GraphQLFormattedError } from "graphql/error";
 import { nanoid } from "nanoid";
 import { IUser } from "../core";
 import { isDev } from "../core/utils";
+import { UserAugment } from "./utils";
 
 export async function signinResolver(params: any, req: Request) {
     let body = params as { email: string, password: string };
@@ -38,7 +39,7 @@ export async function signinResolver(params: any, req: Request) {
                 audience: 'http://localhost:3000'
             })
 
-            return { profile, token: jwt };
+            return { profile: UserAugment(profile), token: jwt };
         }
         else {
             errs.email = " email";
@@ -119,7 +120,7 @@ export async function signupResolver(args: any, req: Request) {
                     audience: isDev() ? 'http://localhost:3000' : "https://*.traffichub.co"
                 })
 
-                return { profile, token: jwt };
+                return { profile: UserAugment(profile), token: jwt };
             }
         }
     }

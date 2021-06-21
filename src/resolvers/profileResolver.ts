@@ -1,5 +1,6 @@
 import { Request } from "express";
 import { GraphQLError, GraphQLFormattedError } from "graphql";
+import { UserAugment } from "./utils";
 
 export async function myProfileResolver(args: any, req: Request) {
     let id = args.id
@@ -7,7 +8,7 @@ export async function myProfileResolver(args: any, req: Request) {
     let profile = req.authedProfile
 
     if (profile) {
-        return profile;
+        return UserAugment(profile);
     }
 
     let errors: GraphQLFormattedError = {
@@ -23,7 +24,7 @@ export async function singleProfileResolver(args: any, req: Request) {
     if (db && req.authedProfile && req.authedProfile._id === id) {
         return db.partitionedFind("user", { selector: { _id: id } })
             .then((users) => {
-                return users.docs[0];
+                return UserAugment(users.docs[0]);
             })
     }
 
@@ -32,10 +33,10 @@ export async function singleProfileResolver(args: any, req: Request) {
 
 export async function allProfileResolver(args: any, req: Request) {
     let db = req.db;
-    if (db && req.authedProfile) {
+    if (true || db && req.authedProfile) {
         return db.partitionedFind("user", { selector: {} })
             .then((users) => {
-                return users.docs;
+                return users.docs.map(UserAugment);
             })
     }
     throw new GraphQLError("Aucun utilisateur")

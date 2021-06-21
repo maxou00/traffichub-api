@@ -1,0 +1,14 @@
+
+export const PERIOD_M1 = 60 * 1000;
+export const PERIOD_M5 = 5 * PERIOD_M1;
+export const PERIOD_M30 = 6 * PERIOD_M5;
+export const PERIOD_H1 = 2 * PERIOD_M30;
+export const PERIOD_H4 = 4 * PERIOD_H1;
+export const PERIOD_D1 = 24 * PERIOD_H1;
+export const PERIOD_D3 = 3 * PERIOD_D1;
+export const PERIOD_W1 = 7 * PERIOD_D1;
+export const PERIOD_W2 = 2 * PERIOD_W1;
+export const PERIOD_MN1 = 4 * PERIOD_W1;
+export const PERIOD_MN3 = 3 * PERIOD_MN1;
+export const PERIOD_MN6 = 2 * PERIOD_MN3;
+export const PERIOD_Y1 = 2 * PERIOD_MN6;
