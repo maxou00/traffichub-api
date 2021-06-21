@@ -11,12 +11,12 @@ export async function singleProjectResolver(args: any, req: Request) {
     let profile = req.authedProfile
 
     if (profile) {
-        return ProjectAugment( (await db.partitionedFind("project", {
+        return ProjectAugment((await db.partitionedFind("project", {
             selector: {
                 _id: id,
                 user: profile._id
             }
-        })).docs[0] )
+        })).docs[0])
     }
 
     let errors: GraphQLFormattedError = {
@@ -190,27 +190,48 @@ export async function oneTrackerVisitorsInFrame(args: any, req: Request) {
             let to = args.to ? Date.parse(args.to) : Date.now();
             let period = args.timeframe as number;
 
-            let reports = (await db.partitionedFind("report", {
-                selector: {
-                    trackingTag: tracker.tag,
-                    "$and": [
-                        {
-                            createdAt: {
-                                "$gte": from
-                            }
-                        },
-                        {
-                            createdAt: {
-                                "$lte": to
-                            }
-                        }
-                    ]
-                }
-            })).docs as unknown[] as IWebReport[];
+            let found: IWebReport[] = [];
+            let skip = 0;
+            let hasNext = true;
 
-            if (reports) {
-                let map = reports.map(ReportAugment);
-                console.log(tag, " Found ",map.length);
+            let selector = {
+                trackingTag: tracker.tag,
+                "$and": [
+                    {
+                        createdAt: {
+                            "$gte": from
+                        }
+                    },
+                    {
+                        createdAt: {
+                            "$lte": to
+                        }
+                    }
+                ]
+            }
+
+            do {
+
+                await db.partitionedFind("report", {
+                    selector,
+                    skip
+                }).then((rs) => {
+                    let reports = rs.docs as unknown[] as IWebReport[];
+                    if (reports.length > 0) {
+                        let map = reports.map(ReportAugment);
+                        found.push(...map);
+                        skip += 25;
+                    }
+                    else {
+                        hasNext = false;
+                    }
+                })
+
+            } while (hasNext);
+
+
+            if (found) {
+                let map = found.map(ReportAugment);
                 let classifier = new ReportTimeClassifier(map, {
                     from: from,
                     to: to
@@ -221,5 +242,5 @@ export async function oneTrackerVisitorsInFrame(args: any, req: Request) {
         }
     }
 
-    return { total: 0, reports: [], groups: []};
+    return { total: 0, reports: [], groups: [] };
 }
