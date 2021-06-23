@@ -12,6 +12,8 @@ RUN mkdir /usr/app/build
 
 COPY build  build
 
+COPY schema.gql .
+
 ENV PORT=80
 
 EXPOSE 80
