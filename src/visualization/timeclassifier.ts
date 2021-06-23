@@ -55,13 +55,11 @@ abstract class TimeClassifier<T>{
 
             let matches = this.source.filter((t,i) => this.checker(t, start, end))
 
-            if(matches.length > 0) {
-                groups.push({
-                    from: start,
-                    to: end,
-                    data: matches
-                });
-            }
+            groups.push({
+                from: start,
+                to: end,
+                data: matches
+            });
             
             periodStart = end + 1;
         }

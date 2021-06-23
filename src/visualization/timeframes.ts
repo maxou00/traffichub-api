@@ -1,4 +1,3 @@
-
 export const PERIOD_M1 = 60 * 1000;
 export const PERIOD_M5 = 5 * PERIOD_M1;
 export const PERIOD_M30 = 6 * PERIOD_M5;

@@ -52,7 +52,9 @@ app.use((req,res,next) => {
 app.use("/", graphqlHTTP({
     schema: ApiSchema,
     rootValue: root,
-    graphiql: true,
+    graphiql: {
+        headerEditorEnabled: true
+    }
 }));
 
 
