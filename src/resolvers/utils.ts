@@ -1,4 +1,5 @@
 import { Request } from "express"
+import platform from "platform";
 import { oneTrackerVisitorsInFrame } from "./projectResolver";
 
 export function UserAugment(user: any) {
@@ -89,6 +90,9 @@ export function ReportAugment(r: any) {
                     tag: this.trackingTag
                 }
             })).docs[0]);
+        },
+        platform: function() {
+            return platform.parse(this.navigator.userAgent);
         },
         created: function () {
             return new Date(this.createdAt).toUTCString()

@@ -38,6 +38,8 @@ enum TrackerType {
 
 type GroupedSiteVisitor {
     total: Int
+    browser: [String!]!
+    os: [String!]!
     reports: [WebReport!]!
     groups: [ReportTimeGroup!]!
 }
@@ -45,7 +47,7 @@ type GroupedSiteVisitor {
 type ReportTimeGroup {
     from: Float
     to: Float
-    data: [WebReport!]!
+    count: Int!
 }
 
 type IpInfo {
@@ -90,6 +92,24 @@ type WebReportNavigator {
     extas: WebReportNavigatorExtras
 }
 
+type WebPlatformOS {
+    architecture: Int
+    family: String
+    version: String
+}
+
+type WebReportPlatform {
+    description: String!
+    layout: String
+    manufacturer: String
+    name: String
+    prerelease: String
+    product: String
+    ua: String
+    version: String
+    os: WebPlatformOS
+}
+
 type WebReport  {
     tracker: Tracker
     pageTitle: String
@@ -98,6 +118,7 @@ type WebReport  {
     navigator: WebReportNavigator
     reporterAddress: String
     ipInfo: IpInfo
+    platform: WebPlatformOS
     id: String!
     createdAt: String!
     updatedAt: String!

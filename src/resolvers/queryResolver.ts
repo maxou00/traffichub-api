@@ -9,4 +9,5 @@ export default {
     projects: allProjectsResolver,
     tracker: singleTrackerResolver,
     trackers: allTrackerResolver,
+    
 }

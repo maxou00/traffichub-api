@@ -1,7 +1,9 @@
 import { Request } from "express";
 import { GraphQLError, GraphQLFormattedError } from "graphql";
 import { nanoid } from "nanoid";
+import platform from "platform";
 import { IProject, IWebReport, IWebTracker } from "../core";
+import { randomColour } from "../core/colours";
 import { ReportTimeClassifier } from "../visualization/classifiers";
 import { ProjectAugment, ReportAugment, TrackerAugment } from "./utils";
 
@@ -232,15 +234,42 @@ export async function oneTrackerVisitorsInFrame(args: any, req: Request) {
 
             if (found) {
                 let map = found.map(ReportAugment);
+                let browserGroup: any = {};
+                let osGroup: any = {};
+
+                if (map.length > 0) {
+
+                    map.forEach((r) => {
+                        let name = r.platform().name;
+                        let os = r.platform().os?.family || "unknown";
+
+                        if (browserGroup[name]) {
+                            browserGroup[name] += 1;
+                        }
+                        else {
+                            browserGroup[name] = 1;
+                        }
+
+                        if (osGroup[os]) {
+                            osGroup[os] += 1;
+                        }
+                        else {
+                            osGroup[os] = 1;
+                        }
+                    })
+                }
+
                 let classifier = new ReportTimeClassifier(map, {
                     from: from,
                     to: to
                 }, period);
 
-                return { total: map.length, reports: map, groups: classifier.groups };
+                let browserGroupArray = Object.keys(browserGroup).map((g) => `${g}::${browserGroup[g]}::${randomColour()}`);
+                let osGroupArray = Object.keys(osGroup).map((g) => `${g}::${osGroup[g]}::${randomColour()}`);
+
+                return { total: map.length, browser: browserGroupArray, os: osGroupArray, reports: map, groups: classifier.groups.map((g) => { return { from: g.from, to: g.to, count: g.data.length } }) };
             }
         }
     }
-
-    return { total: 0, reports: [], groups: [] };
+    return { total: 0, browser: [], os: [], reports: [], groups: [] };
 }
