@@ -29,7 +29,7 @@ abstract class TimeClassifier<T>{
         /// Step 3: fill ranges with data.
 
         let temporalSpace = this.period.to - this.period.from;
-        let periodCount = Math.floor(temporalSpace / this.timeframe);
+        let periodCount = Math.ceil(temporalSpace / this.timeframe);
 
         let groups: Array<TimeGroup<T>> = [];
         /// Setup ranges
