@@ -1,35 +1,14 @@
 import { Request } from "express";
 import { GraphQLError, GraphQLFormattedError } from "graphql";
 import { nanoid } from "nanoid";
-import platform from "platform";
-import { IProject, IWebReport, IWebTracker } from "../core";
+import { IWebReport, IWebTracker } from "../core";
 import { randomColour } from "../core/colours";
 import { ReportTimeClassifier } from "../visualization/classifiers";
-import { ProjectAugment, ReportAugment, TrackerAugment } from "./utils";
+import { PERIOD_H1 } from "../visualization/timeframes";
+import { ReportAugment, TrackerAugment } from "./utils";
 
-export async function singleProjectResolver(args: any, req: Request) {
-    let id = args.id
-    let db = req.db;
-    let profile = req.authedProfile
-
-    if (profile) {
-        return ProjectAugment((await db.partitionedFind("project", {
-            selector: {
-                _id: id,
-                user: profile._id
-            }
-        })).docs[0])
-    }
-
-    let errors: GraphQLFormattedError = {
-        message: "Erreur d'authentification",
-    }
-    throw errors;
-}
-
-export async function createProject(args: any, req: Request) {
-    let project = args.project as any;
-    let tracker = args.firstTracker as any;
+export async function createTracker(args: any, req: Request) {
+    let tracker = args.tracker as any;
 
     let db = req.db;
     let profile = req.authedProfile
@@ -37,66 +16,36 @@ export async function createProject(args: any, req: Request) {
     if (profile) {
         let errs: any = {};
 
-        let constructed: IProject = {
-            _id: "project:" + nanoid(),
-            title: (project.title as string).toUpperCase(),
-            comment: project.comment,
-            user: profile._id,
-            createdAt: Date.now(),
-            updatedAt: Date.now()
+        if (!tracker.title) {
+            errs.trackerTitle = "Indiquez un titre au traqueur";
         }
 
-        if (!constructed.title) {
-            errs.title = "Indiquez le titre du projet";
-        }
-        else {
-            let existent = (await db.partitionedFind("project", {
-                selector: {
-                    title: constructed.title,
-                    user: constructed.user
-                }
-            })).docs;
-
-            if (existent.length > 0) {
-                errs.title = "Un projet de ce nom existe déjà";
-            }
+        if (!tracker.url) {
+            errs.trackerUrl = "Indiquez l'adresse internet du site à surveiller."
         }
 
-        if (tracker) {
-            if (!tracker.title) {
-                errs.trackerTitle = "Indiquez un titre au traqueur";
-            }
-
-            if (!tracker.url) {
-                errs.trackerUrl = "Indiquez l'adresse internet du site à surveiller."
-            }
-
-            let url = tracker.url as string;
-            if (url && !url.match(/^(http[s]?):\/\/(.*)?/)) {
-                errs.trackerUrl = "Adresse internet invalide";
-            }
+        let url = tracker.url as string;
+        if (url && !url.match(/^(http[s]?):\/\/(.*)?/)) {
+            errs.trackerUrl = "Adresse internet invalide";
         }
 
         if (Object.keys(errs).length > 0) {
             throw new GraphQLError("Corrigez les propriétés incorrectes.", undefined, undefined, undefined, undefined, undefined, errs);
         }
 
-        let projectId = (await db.insert(constructed)).id;
-        if (projectId) {
-            let trackerDoc: IWebTracker = {
-                _id: "tracker:" + nanoid(),
-                type: "web",
-                project: projectId,
-                title: tracker.title,
-                url: tracker.url,
-                tag: nanoid(),
-                createdAt: Date.now(),
-                updatedAt: Date.now()
-            }
-
-            await db.insert(trackerDoc);
-            return { id: projectId };
+        let trackerDoc: IWebTracker = {
+            _id: "tracker:" + nanoid(),
+            type: "web",
+            userId: profile._id,
+            title: tracker.title,
+            url: tracker.url,
+            tag: nanoid(),
+            createdAt: Date.now(),
+            updatedAt: Date.now()
         }
+
+        let r = await db.insert(trackerDoc);
+        return { id: r.id };
     }
 
     let errors: GraphQLFormattedError = {
@@ -105,21 +54,6 @@ export async function createProject(args: any, req: Request) {
     throw errors;
 }
 
-export async function allProjectsResolver(args: any, req: Request) {
-    let id = args.id
-    let db = req.db;
-    let profile = req.authedProfile;
-
-    if (profile) {
-        return (await db.partitionedFind("project", {
-            selector: {
-                user: profile._id
-            }
-        })).docs.map(ProjectAugment)
-    }
-
-    throw new GraphQLError("Utilisateur inconnu")
-}
 
 export async function singleTrackerResolver(args: any, req: Request) {
     let id = args.id
@@ -129,21 +63,13 @@ export async function singleTrackerResolver(args: any, req: Request) {
     if (profile) {
         let tracker = (await db.partitionedFind("tracker", {
             selector: {
-                _id: id
+                _id: id,
+                userId: profile._id
             }
         })).docs[0] as unknown as IWebTracker;
 
         if (tracker) {
-            let project = (await db.partitionedFind("project", {
-                selector: {
-                    _id: tracker.project,
-                    user: profile._id
-                }
-            })).docs[0] as unknown as IProject;
-
-            if (project) {
-                return TrackerAugment(tracker);
-            }
+            return TrackerAugment(tracker);
         }
     }
 
@@ -156,17 +82,9 @@ export async function allTrackerResolver(args: any, req: Request) {
     let profile = req.authedProfile;
 
     if (profile) {
-        let projects = (await db.partitionedFind("project", {
-            selector: {
-                user: profile._id
-            }
-        })).docs as unknown as IProject[];
-
         let trackers = (await db.partitionedFind("tracker", {
             selector: {
-                project: {
-                    "$in": projects.map((p) => p._id)
-                }
+                userId: profile._id
             }
         })).docs as unknown as IWebTracker[];
         return trackers.map(TrackerAugment);
@@ -183,14 +101,15 @@ export async function oneTrackerVisitorsInFrame(args: any, req: Request) {
     if (true || profile) {
         let tracker = (await db.partitionedFind("tracker", {
             selector: {
-                tag
+                tag,
+                userId: profile._id
             },
         })).docs[0] as unknown as IWebTracker;
 
         if (tracker) {
             let from = args.from ? Date.parse(args.from) : tracker.createdAt;
             let to = args.to ? Date.parse(args.to) : Date.now();
-            let period = args.timeframe as number;
+            let period = args.timeframe as number || PERIOD_H1;
 
             let found: IWebReport[] = [];
             let skip = 0;
@@ -230,7 +149,6 @@ export async function oneTrackerVisitorsInFrame(args: any, req: Request) {
                 })
 
             } while (hasNext);
-
 
             if (found) {
                 let map = found.map(ReportAugment);

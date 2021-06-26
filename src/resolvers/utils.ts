@@ -1,45 +1,18 @@
 import { Request } from "express"
 import platform from "platform";
-import { oneTrackerVisitorsInFrame } from "./projectResolver";
+import { oneTrackerVisitorsInFrame } from "./trackerResolver";
 
 export function UserAugment(user: any) {
     return {
         ...user,
         id: function () { return this._id },
         fullName: function () { return `${this.firstName} ${this.lastName}` },
-        projects: async function (args: any, req: Request) {
-            return (await req.db.partitionedFind("project", {
-                selector: {
-                    user: this._id
-                }
-            })).docs.map((p) => ProjectAugment(p))
-        },
-        created: function () {
-            return new Date(this.createdAt).toUTCString()
-        },
-        updated: function () {
-            return new Date(this.updatedAt).toUTCString()
-        },
-    }
-}
-
-export function ProjectAugment(p: any) {
-    return {
-        ...p,
-        id: function () { return this._id },
-        owner: async function (args: any, req: Request) {
-            return UserAugment((await req.db.partitionedFind("user", {
-                selector: {
-                    _id: this.user
-                }
-            })).docs[0]);
-        },
         trackers: async function (args: any, req: Request) {
             return (await req.db.partitionedFind("tracker", {
                 selector: {
-                    project: this._id
+                    userId: this._id
                 }
-            })).docs.map((t) => TrackerAugment(t))
+            })).docs.map((p) => TrackerAugment(p))
         },
         created: function () {
             return new Date(this.createdAt).toUTCString()
@@ -54,10 +27,10 @@ export function TrackerAugment(t: any) {
     return {
         ...t,
         id: function () { return this._id },
-        project: async function (args: any, req: Request) {
-            return ProjectAugment((await req.db.partitionedFind("project", {
+        user: async function (args: any, req: Request) {
+            return UserAugment((await req.db.partitionedFind("user", {
                 selector: {
-                    project: this.project
+                    _id: req.authedProfile._id
                 }
             })).docs[0]);
         },

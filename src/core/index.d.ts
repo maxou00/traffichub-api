@@ -10,19 +10,10 @@ export interface IUser {
     updatedAt: number;
 }
 
-export interface IProject {
-    _id: string;
-    user: string;
-    title: string;
-    comment: string;
-    createdAt: number;
-    updatedAt: number;
-}
-
 export interface IWebTracker {
     _id: string;
-    project: string;
     title: string;
+    userId: string;
     type: 'web';
     url: string;
     tag: string;

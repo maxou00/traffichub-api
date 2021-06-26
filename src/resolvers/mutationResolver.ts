@@ -1,8 +1,8 @@
 import { signinResolver, signupResolver } from "./authResolvers";
-import { createProject } from "./projectResolver";
+import { createTracker } from "./trackerResolver";
 
 export default {
     signin: signinResolver,
     signup: signupResolver,
-    createProject
+    createTracker
 }

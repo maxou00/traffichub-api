@@ -3,16 +3,6 @@ type User {
     lastName: String!
     fullName: String!
     email: String!
-    projects: [Project]!
-    id: String!
-    createdAt: String!
-    updatedAt: String!
-}
-
-type Project  {
-    title: String!
-    comment: String
-    owner: User!
     trackers: [Tracker]!
     id: String!
     createdAt: String!
@@ -20,7 +10,7 @@ type Project  {
 }
 
 type Tracker {
-    project: Project
+    user: User!
     title: String
     type: TrackerType
     url: String
@@ -129,17 +119,12 @@ type SigninResponse {
     token: String
 }
 
-input ProjectInput {
-    title: String!
-    comment: String
-}
-
 input TrackerInput {
     title: String!
     url: String!
 }
 
-type ProjectInputResponse {
+type TrackerInputResponse {
     id: String
 }
 
@@ -147,8 +132,6 @@ type Query {
     me: User
     profile(id: String): User
     profiles: [User]!
-    project(id: String): Project
-    projects: [Project]!
     tracker(id: String!): Tracker
     trackers: [Tracker]!
     reports: [WebReport]!
@@ -157,5 +140,5 @@ type Query {
 type Mutation {
     signin(email: String, password: String): SigninResponse
     signup(firstName: String, lastName: String, email: String, password: String, confirmPassword: String): SigninResponse
-    createProject(project: ProjectInput, firstTracker: TrackerInput): ProjectInputResponse
+    createTracker(tracker: TrackerInput): TrackerInputResponse
 }
