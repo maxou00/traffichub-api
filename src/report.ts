@@ -37,7 +37,6 @@ router.post("/:tag", async (req: Request, res: Response) => {
                 let match = (matches.docs[0] as unknown) as IWebTracker;
                 let body = req.body as IWebReport;
                 body._id = "report:" + nanoid();
-                body.project = match.project;
                 body.trackingTag = match.tag;
                 body.createdAt = Date.now();
                 body.updatedAt = Date.now();
