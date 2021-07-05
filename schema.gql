@@ -139,6 +139,6 @@ type Query {
 
 type Mutation {
     signin(email: String, password: String): SigninResponse
-    signup(firstName: String, lastName: String, email: String, password: String, confirmPassword: String): SigninResponse
+    signup(firstName: String, lastName: String, gender: String, email: String, password: String, confirmPassword: String): SigninResponse
     createTracker(tracker: TrackerInput): TrackerInputResponse
 }

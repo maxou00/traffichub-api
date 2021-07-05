@@ -53,7 +53,7 @@ export async function signinResolver(params: any, req: Request) {
 
 
 export async function signupResolver(args: any, req: Request) {
-    let body = args as { email: string, password: string, firstName: string, lastName: string };
+    let body = args as { email: string, password: string, firstName: string, lastName: string, gender: string, confirmPassword: string };
     let errs: any = {};
     if (!body.email) {
         errs.email = "Indiquez votre email";
@@ -70,6 +70,10 @@ export async function signupResolver(args: any, req: Request) {
 
     if (!body.firstName) {
         errs.firstName = "Indiquez votre prénom";
+    }
+
+    if (!body.gender) {
+        errs.gender = "Genre inconnu";
     }
 
     if (!body.lastName) {
@@ -95,6 +99,7 @@ export async function signupResolver(args: any, req: Request) {
                 _id: "user:" + nanoid(),
                 firstName: body.firstName.trim(),
                 lastName: body.lastName.trim(),
+                gender: body.gender.trim(),
                 email: body.email.trim(),
                 password: createHash("sha256").update(body.password.trim()).digest("hex"),
                 verified: false,
