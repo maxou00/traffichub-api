@@ -44,5 +44,5 @@ jobs:
             host: ${{ secrets.SERVER_HOST }}
             username: ${{ secrets.SERVER_USER }}
             password: ${{ secrets.SERVER_PASS }}
-            script: docker pull wastudio/tfh-api:test && cd /var/apps/traffichub.co/test && docker-compose up -d
+            script: docker pull wastudio/tfh-api:test && cd /var/apps/traffichub.co/tfh.test && docker-compose up -d
   
