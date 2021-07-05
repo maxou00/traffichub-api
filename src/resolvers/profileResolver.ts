@@ -1,5 +1,6 @@
 import { Request } from "express";
 import { GraphQLError, GraphQLFormattedError } from "graphql";
+import { ErrorCodes, stackError } from "../core/error-util";
 import { UserAugment } from "./utils";
 
 export async function myProfileResolver(args: any, req: Request) {
@@ -11,10 +12,7 @@ export async function myProfileResolver(args: any, req: Request) {
         return UserAugment(profile);
     }
 
-    let errors: GraphQLFormattedError = {
-        message: "Erreur d'authentification",
-    }
-    throw errors;
+    throw stackError(ErrorCodes.AUTH_FAILURE, {});
 }
 
 export async function singleProfileResolver(args: any, req: Request) {
@@ -28,7 +26,7 @@ export async function singleProfileResolver(args: any, req: Request) {
             })
     }
 
-    throw new GraphQLError("Utilisateur inconnu")
+    throw stackError(ErrorCodes.AUTH_FAILURE, {});
 }
 
 export async function allProfileResolver(args: any, req: Request) {
@@ -39,5 +37,4 @@ export async function allProfileResolver(args: any, req: Request) {
                 return users.docs.map(UserAugment);
             })
     }
-    throw new GraphQLError("Aucun utilisateur")
 }

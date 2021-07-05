@@ -6,6 +6,7 @@ import { nanoid } from "nanoid";
 import { IUser } from "../core";
 import { isDev } from "../core/utils";
 import { UserAugment } from "./utils";
+import { ErrorCodes, stackError } from "../core/error-util";
 
 export async function signinResolver(params: any, req: Request) {
     let body = params as { email: string, password: string };
@@ -47,12 +48,7 @@ export async function signinResolver(params: any, req: Request) {
         }
     }
 
-    let errors: GraphQLFormattedError = {
-        message: "Erreur d'authentification",
-        extensions: errs
-    }
-
-    throw new GraphQLError("Erreur d'authentification", errs);
+    throw stackError(ErrorCodes.AUTH_FAILURE, errs);
 }
 
 
@@ -125,5 +121,5 @@ export async function signupResolver(args: any, req: Request) {
         }
     }
 
-    throw new GraphQLError("Erreur d'inscription", errs);
+    throw stackError(ErrorCodes.SIGNUP_FAILURE, errs);
 }

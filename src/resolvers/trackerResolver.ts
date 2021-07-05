@@ -3,6 +3,7 @@ import { GraphQLError, GraphQLFormattedError } from "graphql";
 import { nanoid } from "nanoid";
 import { IWebReport, IWebTracker } from "../core";
 import { randomColour } from "../core/colours";
+import { ErrorCodes, stackError } from "../core/error-util";
 import { ReportTimeClassifier } from "../visualization/classifiers";
 import { PERIOD_H1 } from "../visualization/timeframes";
 import { ReportAugment, TrackerAugment } from "./utils";
@@ -30,7 +31,7 @@ export async function createTracker(args: any, req: Request) {
         }
 
         if (Object.keys(errs).length > 0) {
-            throw new GraphQLError("Corrigez les propriétés incorrectes.", undefined, undefined, undefined, undefined, undefined, errs);
+            throw stackError(ErrorCodes.BAD_REQUEST, errs);
         }
 
         let trackerDoc: IWebTracker = {
@@ -48,10 +49,7 @@ export async function createTracker(args: any, req: Request) {
         return { id: r.id };
     }
 
-    let errors: GraphQLFormattedError = {
-        message: "Erreur d'authentification",
-    }
-    throw errors;
+    throw stackError(ErrorCodes.AUTH_FAILURE, {});
 }
 
 
@@ -73,7 +71,7 @@ export async function singleTrackerResolver(args: any, req: Request) {
         }
     }
 
-    throw new GraphQLError("Accès non autorisé")
+    throw stackError(ErrorCodes.AUTH_FAILURE, {});
 }
 
 export async function allTrackerResolver(args: any, req: Request) {
@@ -90,7 +88,7 @@ export async function allTrackerResolver(args: any, req: Request) {
         return trackers.map(TrackerAugment);
     }
 
-    throw new GraphQLError("Accès non autorisé")
+    throw stackError(ErrorCodes.AUTH_FAILURE, {});
 }
 
 export async function oneTrackerVisitorsInFrame(args: any, req: Request) {
