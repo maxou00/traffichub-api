@@ -56,7 +56,7 @@ app.use("/", graphqlHTTP({
         headerEditorEnabled: true
     },
     customFormatErrorFn: (err: any) => {
-        return { message: err.code, stack: err.stack }
+        return { message: err.code ?? err.message, stack: err.stack ?? {} }
     }
 }));
 
